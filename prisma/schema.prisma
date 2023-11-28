@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  comments Comment[]
+  Role     Role      @relation(fields: [roleId], references: [id])
+  roleId   String    @db.ObjectId
+}
+
+model Role {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  label String
+
+  users User[]
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Movie {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  year     Int
+  summaty  String?
+  director String?
+  genre    String
+  rating   Float
+  imdb_url String?
+
+  reviews Review[]
+}
+
+model Review {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  author  String
+  content String
+  rating  Int
+
+  comments Comment[]
+
+  Movie   Movie?  @relation(fields: [movieId], references: [id])
+  movieId String? @db.ObjectId
+}
+
+model Comment {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  content String
+  date    DateTime @default(now())
+
+  Review   Review? @relation(fields: [reviewId], references: [id])
+  reviewId String? @db.ObjectId
+  User     User?   @relation(fields: [userId], references: [id])
+  userId   String? @db.ObjectId
+}
